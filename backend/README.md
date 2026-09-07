@@ -38,7 +38,8 @@ python main.py
 Gemini uses `gemini-3.6-flash` and is asked to return a JSON object containing a
 0–100 relevance score and a short rationale. API failures and malformed JSON
 are shown as unavailable scores instead of being treated as real relevance
-results. Do not commit either key to the project.
+results. Scoring calls are spaced at least one second apart. Do not commit
+either key to the project.
 
 ## Structure
 

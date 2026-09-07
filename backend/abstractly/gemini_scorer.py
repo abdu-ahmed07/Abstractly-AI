@@ -5,12 +5,19 @@ from __future__ import annotations
 import json
 import math
 import os
+import threading
+import time
 from dataclasses import dataclass
 from typing import Any
 
 import google.generativeai as genai
 
 from .semantic_scholar import ResearchPaper
+
+
+_MIN_SCORING_INTERVAL_SECONDS = 1.0
+_SCORING_RATE_LIMIT_LOCK = threading.Lock()
+_LAST_SCORING_STARTED_AT = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +60,7 @@ class GeminiRelevanceScorer:
         prompt = self._build_prompt(topic, paper)
 
         try:
+            self._wait_between_requests()
             response = self.model.generate_content(
                 prompt,
                 generation_config={
@@ -99,6 +107,17 @@ class GeminiRelevanceScorer:
             relevance_score=None,
             rationale=f"Scoring failed: {error_message}",
         )
+
+    @staticmethod
+    def _wait_between_requests() -> None:
+        """Keep Gemini scoring request starts at least one second apart."""
+        global _LAST_SCORING_STARTED_AT
+
+        with _SCORING_RATE_LIMIT_LOCK:
+            elapsed = time.monotonic() - _LAST_SCORING_STARTED_AT
+            if _LAST_SCORING_STARTED_AT and elapsed < _MIN_SCORING_INTERVAL_SECONDS:
+                time.sleep(_MIN_SCORING_INTERVAL_SECONDS - elapsed)
+            _LAST_SCORING_STARTED_AT = time.monotonic()
 
     @staticmethod
     def _build_prompt(topic: str, paper: ResearchPaper) -> str:
