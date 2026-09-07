@@ -20,7 +20,8 @@ RESEARCH_TOPIC = "large language models"
 
 Change that string to try another research area. The client reads the API key
 from `SEMANTIC_SCHOLAR_API_KEY` and sends it in the `x-api-key` HTTP header.
-Requests are throttled to one per second to stay within the key's rate limit:
+Each request attempt waits one second before starting, and HTTP 429 responses
+are retried up to three times with a two-second backoff:
 
 ```bash
 export SEMANTIC_SCHOLAR_API_KEY="your-key"

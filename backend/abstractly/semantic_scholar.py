@@ -13,6 +13,8 @@ from urllib.request import Request, urlopen
 
 
 _MIN_REQUEST_INTERVAL_SECONDS = 1.0
+_429_RETRY_BACKOFF_SECONDS = 2.0
+_MAX_429_RETRIES = 3
 _REQUEST_RATE_LIMIT_LOCK = threading.Lock()
 _LAST_REQUEST_STARTED_AT = 0.0
 
@@ -47,13 +49,14 @@ class SemanticScholarClient:
 
     @staticmethod
     def _wait_for_rate_limit() -> None:
-        """Ensure request start times are at least one second apart."""
+        """Wait before every request attempt to avoid burst traffic."""
         global _LAST_REQUEST_STARTED_AT
 
         with _REQUEST_RATE_LIMIT_LOCK:
             elapsed = time.monotonic() - _LAST_REQUEST_STARTED_AT
-            if elapsed < _MIN_REQUEST_INTERVAL_SECONDS:
-                time.sleep(_MIN_REQUEST_INTERVAL_SECONDS - elapsed)
+            time.sleep(
+                max(_MIN_REQUEST_INTERVAL_SECONDS, _MIN_REQUEST_INTERVAL_SECONDS - elapsed)
+            )
             _LAST_REQUEST_STARTED_AT = time.monotonic()
 
     def search_papers(
@@ -90,24 +93,31 @@ class SemanticScholarClient:
             method="GET",
         )
 
-        try:
-            self._wait_for_rate_limit()
-            with urlopen(request, timeout=self.timeout) as response:
-                payload = json.load(response)
-        except HTTPError as error:
-            detail = error.read().decode("utf-8", errors="replace").strip()
-            message = f"Semantic Scholar returned HTTP {error.code}"
-            if detail:
-                message = f"{message}: {detail}"
-            raise SemanticScholarError(message) from error
-        except (URLError, TimeoutError) as error:
-            raise SemanticScholarError(
-                f"Could not reach Semantic Scholar: {error}"
-            ) from error
-        except json.JSONDecodeError as error:
-            raise SemanticScholarError(
-                "Semantic Scholar returned invalid JSON."
-            ) from error
+        for retry_number in range(_MAX_429_RETRIES + 1):
+            try:
+                self._wait_for_rate_limit()
+                with urlopen(request, timeout=self.timeout) as response:
+                    payload = json.load(response)
+                break
+            except HTTPError as error:
+                if error.code == 429 and retry_number < _MAX_429_RETRIES:
+                    error.close()
+                    time.sleep(_429_RETRY_BACKOFF_SECONDS)
+                    continue
+
+                detail = error.read().decode("utf-8", errors="replace").strip()
+                message = f"Semantic Scholar returned HTTP {error.code}"
+                if detail:
+                    message = f"{message}: {detail}"
+                raise SemanticScholarError(message) from error
+            except (URLError, TimeoutError) as error:
+                raise SemanticScholarError(
+                    f"Could not reach Semantic Scholar: {error}"
+                ) from error
+            except json.JSONDecodeError as error:
+                raise SemanticScholarError(
+                    "Semantic Scholar returned invalid JSON."
+                ) from error
 
         raw_papers = payload.get("data", [])[:limit]
         return [
