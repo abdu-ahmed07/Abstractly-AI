@@ -109,7 +109,7 @@ class SemanticScholarClient:
                 "Semantic Scholar returned invalid JSON."
             ) from error
 
-        raw_papers = payload.get("data", [])
+        raw_papers = payload.get("data", [])[:limit]
         return [
             ResearchPaper(
                 title=paper.get("title") or "Untitled paper",
