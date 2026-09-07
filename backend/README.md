@@ -18,10 +18,9 @@ The topic is defined near the top of `main.py`:
 RESEARCH_TOPIC = "large language models"
 ```
 
-Change that string to try another research area. The public Semantic Scholar
-endpoint does not require an API key for this starter use case. If the public
-rate limit is reached, provide an optional Semantic Scholar API key through the
-environment:
+Change that string to try another research area. The client reads the API key
+from `SEMANTIC_SCHOLAR_API_KEY` and sends it in the `x-api-key` HTTP header.
+Requests are throttled to one per second to stay within the key's rate limit:
 
 ```bash
 export SEMANTIC_SCHOLAR_API_KEY="your-key"

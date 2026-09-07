@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 from abstractly.semantic_scholar import (
     SemanticScholarClient,
     SemanticScholarError,
@@ -16,9 +14,7 @@ PAPER_LIMIT = 10
 
 
 def main() -> None:
-    client = SemanticScholarClient(
-        api_key=os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
-    )
+    client = SemanticScholarClient()
 
     try:
         papers = client.search_papers(RESEARCH_TOPIC, limit=PAPER_LIMIT)

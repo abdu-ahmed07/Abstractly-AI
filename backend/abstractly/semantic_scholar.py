@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import json
+import os
+import threading
+import time
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+
+_MIN_REQUEST_INTERVAL_SECONDS = 1.0
+_REQUEST_RATE_LIMIT_LOCK = threading.Lock()
+_LAST_REQUEST_STARTED_AT = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,7 +43,18 @@ class SemanticScholarClient:
         api_key: str | None = None,
     ) -> None:
         self.timeout = timeout
-        self.api_key = api_key
+        self.api_key = api_key or os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
+
+    @staticmethod
+    def _wait_for_rate_limit() -> None:
+        """Ensure request start times are at least one second apart."""
+        global _LAST_REQUEST_STARTED_AT
+
+        with _REQUEST_RATE_LIMIT_LOCK:
+            elapsed = time.monotonic() - _LAST_REQUEST_STARTED_AT
+            if elapsed < _MIN_REQUEST_INTERVAL_SECONDS:
+                time.sleep(_MIN_REQUEST_INTERVAL_SECONDS - elapsed)
+            _LAST_REQUEST_STARTED_AT = time.monotonic()
 
     def search_papers(
         self,
@@ -72,6 +91,7 @@ class SemanticScholarClient:
         )
 
         try:
+            self._wait_for_rate_limit()
             with urlopen(request, timeout=self.timeout) as response:
                 payload = json.load(response)
         except HTTPError as error:

@@ -11,7 +11,9 @@ cd backend
 python main.py
 ~~~
 
-The starter topic is defined in backend/main.py. The Semantic Scholar client uses the public API by default and supports an optional SEMANTIC_SCHOLAR_API_KEY environment variable for higher-rate-limit environments.
+The starter topic is defined in backend/main.py. The client reads SEMANTIC_SCHOLAR_API_KEY from the environment and sends it in the x-api-key HTTP header. Requests are throttled to one per second to respect the API key's rate limit.
+
+Do not commit the API key to the repository.
 
 ## Project structure
 
