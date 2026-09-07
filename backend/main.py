@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abstractly.gemini_scorer import GeminiRelevanceScorer, GeminiScoringError
 from abstractly.semantic_scholar import (
     SemanticScholarClient,
     SemanticScholarError,
@@ -22,20 +23,43 @@ def main() -> None:
         print(f"Unable to fetch papers: {error}")
         return
 
-    print(f"Recent papers matching: {RESEARCH_TOPIC}")
+    try:
+        scorer = GeminiRelevanceScorer()
+    except GeminiScoringError as error:
+        print(f"Unable to score papers: {error}")
+        return
+
+    scored_papers = []
+    for paper in papers:
+        try:
+            scored_papers.append(scorer.score_paper(RESEARCH_TOPIC, paper))
+        except GeminiScoringError as error:
+            scored_papers.append(
+                scorer.failed_assessment(paper, str(error))
+            )
+
+    scored_papers.sort(
+        key=lambda item: (
+            item.relevance_score is not None,
+            item.relevance_score if item.relevance_score is not None else -1,
+        ),
+        reverse=True,
+    )
+
+    print(f"Papers ranked by Gemini relevance: {RESEARCH_TOPIC}")
     print("=" * 80)
 
-    if not papers:
+    if not scored_papers:
         print("No matching papers found.")
         return
 
-    for index, paper in enumerate(papers, start=1):
-        print(f"\n{index}. {paper.title}")
-        if paper.year is not None:
-            print(f"Year: {paper.year}")
-        print(f"Abstract: {paper.abstract or 'No abstract available.'}")
-        if paper.url:
-            print(f"URL: {paper.url}")
+    for index, assessment in enumerate(scored_papers, start=1):
+        print(f"\n{index}. {assessment.paper.title}")
+        if assessment.relevance_score is None:
+            print("Relevance score: unavailable")
+        else:
+            print(f"Relevance score: {assessment.relevance_score}/100")
+        print(f"Rationale: {assessment.rationale}")
 
 
 if __name__ == "__main__":
