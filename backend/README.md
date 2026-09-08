@@ -41,6 +41,12 @@ are shown as unavailable scores instead of being treated as real relevance
 results. Scoring calls are spaced at least one second apart. Do not commit
 either key to the project.
 
+After scoring, newly scored papers with a score of 50 or higher are sent as a
+simple HTML digest through Resend. The current test recipient is
+`delivered@resend.dev`, the sender is `onboarding@resend.dev`, and the app link
+is the placeholder `https://example.com/abstractly`; update these constants
+after deployment.
+
 On first run, Abstractly automatically creates `abstractly.db` in this
 directory. It stores the current research topic, successfully scored papers,
 and an empty feedback table (`paper_id`, `thumbs_up_down`) reserved for future
@@ -54,6 +60,7 @@ backend/
 ├── abstractly/
 │   ├── __init__.py
 │   ├── database.py          # SQLite topic, paper, and feedback persistence
+│   ├── email_digest.py      # Resend HTML digest delivery
 │   ├── gemini_scorer.py      # Gemini relevance scoring and validation
 │   └── semantic_scholar.py  # API client and paper model
 ├── main.py                   # runnable entry point

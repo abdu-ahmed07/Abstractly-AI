@@ -3,6 +3,13 @@
 from __future__ import annotations
 
 from abstractly.database import AbstractlyDatabase, DatabaseError
+from abstractly.email_digest import (
+    DEFAULT_APP_URL,
+    DEFAULT_RELEVANCE_THRESHOLD,
+    DEFAULT_RECIPIENT,
+    ResendEmailClient,
+    ResendEmailError,
+)
 from abstractly.gemini_scorer import GeminiRelevanceScorer, GeminiScoringError
 from abstractly.semantic_scholar import (
     SemanticScholarClient,
@@ -13,6 +20,8 @@ from abstractly.semantic_scholar import (
 # Replace this value as the project grows into a configurable research feed.
 RESEARCH_TOPIC = "large language models"
 PAPER_LIMIT = 10
+APP_URL = DEFAULT_APP_URL
+RELEVANCE_THRESHOLD = DEFAULT_RELEVANCE_THRESHOLD
 
 
 def main() -> None:
@@ -90,6 +99,35 @@ def main() -> None:
         else:
             print(f"Relevance score: {assessment.relevance_score}/100")
         print(f"Rationale: {assessment.rationale}")
+
+    digest_papers = [
+        assessment
+        for assessment in scored_papers
+        if assessment.relevance_score is not None
+        and assessment.relevance_score >= RELEVANCE_THRESHOLD
+    ]
+    if not digest_papers:
+        print(
+            f"\nNo email digest sent: no newly scored papers reached "
+            f"{RELEVANCE_THRESHOLD}/100."
+        )
+        return
+
+    try:
+        email_client = ResendEmailClient()
+        message_id = email_client.send_digest(
+            RESEARCH_TOPIC,
+            digest_papers,
+            app_url=APP_URL,
+            relevance_threshold=RELEVANCE_THRESHOLD,
+        )
+    except ResendEmailError as error:
+        print(f"\nEmail digest was not sent: {error}")
+    else:
+        print(
+            f"\nEmail digest sent to {DEFAULT_RECIPIENT} "
+            f"(message ID: {message_id})."
+        )
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from .gemini_scorer import (
     ScoredResearchPaper,
 )
 from .database import AbstractlyDatabase, DatabaseError
+from .email_digest import ResendEmailClient, ResendEmailError, build_digest_html
 from .semantic_scholar import ResearchPaper, SemanticScholarClient
 
 __all__ = [
@@ -14,6 +15,9 @@ __all__ = [
     "GeminiRelevanceScorer",
     "GeminiScoringError",
     "ResearchPaper",
+    "ResendEmailClient",
+    "ResendEmailError",
     "ScoredResearchPaper",
     "SemanticScholarClient",
+    "build_digest_html",
 ]
