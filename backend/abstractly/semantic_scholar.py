@@ -27,6 +27,7 @@ class ResearchPaper:
     abstract: str | None
     year: int | None
     url: str | None
+    paper_id: str | None = None
 
 
 class SemanticScholarError(RuntimeError):
@@ -37,7 +38,7 @@ class SemanticScholarClient:
     """Fetch recent papers matching a research topic."""
 
     BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search/bulk"
-    DEFAULT_FIELDS = ("title", "abstract", "year", "url")
+    DEFAULT_FIELDS = ("paperId", "title", "abstract", "year", "url")
 
     def __init__(
         self,
@@ -126,6 +127,7 @@ class SemanticScholarClient:
                 abstract=paper.get("abstract"),
                 year=paper.get("year"),
                 url=paper.get("url"),
+                paper_id=paper.get("paperId"),
             )
             for paper in raw_papers
         ]

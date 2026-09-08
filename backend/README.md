@@ -41,12 +41,19 @@ are shown as unavailable scores instead of being treated as real relevance
 results. Scoring calls are spaced at least one second apart. Do not commit
 either key to the project.
 
+On first run, Abstractly automatically creates `abstractly.db` in this
+directory. It stores the current research topic, successfully scored papers,
+and an empty feedback table (`paper_id`, `thumbs_up_down`) reserved for future
+feedback. Papers already scored for the current topic are skipped on later
+runs.
+
 ## Structure
 
 ```text
 backend/
 ├── abstractly/
 │   ├── __init__.py
+│   ├── database.py          # SQLite topic, paper, and feedback persistence
 │   ├── gemini_scorer.py      # Gemini relevance scoring and validation
 │   └── semantic_scholar.py  # API client and paper model
 ├── main.py                   # runnable entry point

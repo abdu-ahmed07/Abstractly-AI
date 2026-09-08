@@ -5,9 +5,12 @@ from .gemini_scorer import (
     GeminiScoringError,
     ScoredResearchPaper,
 )
+from .database import AbstractlyDatabase, DatabaseError
 from .semantic_scholar import ResearchPaper, SemanticScholarClient
 
 __all__ = [
+    "AbstractlyDatabase",
+    "DatabaseError",
     "GeminiRelevanceScorer",
     "GeminiScoringError",
     "ResearchPaper",
