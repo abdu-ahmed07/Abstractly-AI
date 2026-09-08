@@ -1,0 +1,147 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: abstractly
+    description: Abstractly scored papers and feedback
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /abstractly/papers:
+    get:
+      operationId: listScoredPapers
+      tags: [abstractly]
+      summary: List scored papers
+      responses:
+        "200":
+          description: Scored papers ordered by relevance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoredPaper"
+  /abstractly/feedback:
+    post:
+      operationId: savePaperFeedback
+      tags: [abstractly]
+      summary: Save thumbs-up or thumbs-down feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaperFeedbackInput"
+      responses:
+        "200":
+          description: Feedback saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaperFeedback"
+        "400":
+          description: Invalid feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Paper not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ScoredPaper:
+      type: object
+      properties:
+        paperId:
+          type: string
+        title:
+          type: string
+        abstract:
+          type: ["string", "null"]
+        year:
+          type: ["integer", "null"]
+        url:
+          type: ["string", "null"]
+        relevanceScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        rationale:
+          type: string
+        feedback:
+          type: ["integer", "null"]
+          minimum: -1
+          maximum: 1
+      required:
+        - paperId
+        - title
+        - abstract
+        - year
+        - url
+        - relevanceScore
+        - rationale
+        - feedback
+    PaperFeedbackInput:
+      type: object
+      properties:
+        paperId:
+          type: string
+          minLength: 1
+        thumbsUpDown:
+          type: integer
+          enum: [-1, 1]
+      required:
+        - paperId
+        - thumbsUpDown
+    PaperFeedback:
+      type: object
+      properties:
+        paperId:
+          type: string
+        thumbsUpDown:
+          type: integer
+          enum: [-1, 1]
+        message:
+          type: string
+      required:
+        - paperId
+        - thumbsUpDown
+        - message
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+

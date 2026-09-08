@@ -1,9 +1,9 @@
 # Abstractly
 
-Abstractly is a backend-only research paper discovery pipeline. It fetches
-recent papers from Semantic Scholar, scores their relevance with Gemini, stores
-successful scores in SQLite, and emails a digest of newly scored high-relevance
-papers through Resend.
+Abstractly is a research paper discovery app. It fetches recent papers from
+Semantic Scholar, scores their relevance with Gemini, stores successful scores
+in SQLite, presents them in a focused web feed with thumbs-up/down feedback, and
+emails a digest of newly scored high-relevance papers through Resend.
 
 ## Run
 
@@ -11,6 +11,10 @@ papers through Resend.
 cd artifacts/abstractly/backend
 python main.py
 ```
+
+The Replit `Abstractly` web and `API Server` workflows serve the interface and
+its API. The web app reads scored papers from `GET /api/abstractly/papers` and
+saves feedback through `POST /api/abstractly/feedback`.
 
 The current research topic is defined in `main.py`:
 
@@ -53,7 +57,7 @@ automatically. It contains:
 
 - `research_topics` — the current research topic
 - `papers` — paper metadata, successful scores, rationales, and timestamps
-- `feedback` — placeholder table with `paper_id` and `thumbs_up_down`
+- `feedback` — the latest thumbs-up (`1`) or thumbs-down (`-1`) for each paper
 
 The database file is ignored by Git. Papers whose scoring fails are not marked
 as complete, so a later run can retry them.
@@ -70,6 +74,13 @@ score of 50 or higher. Current temporary values are:
 Update these values in `abstractly/email_digest.py` after the app is deployed
 and a production sending address is available.
 
+## Web interface
+
+The root page lists papers for the current research topic in descending
+relevance order. Each result shows its title, abstract, score, and Gemini
+rationale. Feedback buttons write directly to SQLite and show a confirmation
+without reloading the page.
+
 ## Project structure
 
 ```text
@@ -83,3 +94,6 @@ artifacts/abstractly/backend/
 ├── pyproject.toml
 └── README.md
 ```
+
+The React/Vite interface is under `artifacts/abstractly/src`, and its Express
+routes are under `artifacts/api-server/src/routes`.
