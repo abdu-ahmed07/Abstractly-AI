@@ -20,6 +20,13 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary List scored papers
  */
+export const listScoredPapersQueryViewDefault = `all`;
+
+export const ListScoredPapersQueryParams = zod.object({
+  "email": zod.coerce.string().email(),
+  "view": zod.enum(['all', 'read_later']).default(listScoredPapersQueryViewDefault)
+})
+
 export const listScoredPapersResponseRelevanceScoreMin = 0;
 export const listScoredPapersResponseRelevanceScoreMax = 100;
 
@@ -36,9 +43,58 @@ export const ListScoredPapersResponseItem = zod.object({
   "url": zod.string().nullable(),
   "relevanceScore": zod.number().int().min(listScoredPapersResponseRelevanceScoreMin).max(listScoredPapersResponseRelevanceScoreMax),
   "rationale": zod.string(),
-  "feedback": zod.number().int().min(listScoredPapersResponseFeedbackMin).max(listScoredPapersResponseFeedbackMax).nullable()
+  "feedback": zod.number().int().min(listScoredPapersResponseFeedbackMin).max(listScoredPapersResponseFeedbackMax).nullable(),
+  "readLater": zod.boolean()
 })
 export const ListScoredPapersResponse = zod.array(ListScoredPapersResponseItem)
+
+
+/**
+ * @summary Save or remove a paper from Read Later
+ */
+
+
+
+export const SetReadLaterBody = zod.object({
+  "email": zod.string().email(),
+  "paperId": zod.string().min(1),
+  "saved": zod.boolean()
+})
+
+export const SetReadLaterResponse = zod.object({
+  "paperId": zod.string(),
+  "saved": zod.boolean(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Get feed settings
+ */
+export const GetFeedSettingsQueryParams = zod.object({
+  "email": zod.coerce.string().email()
+})
+
+export const GetFeedSettingsResponse = zod.object({
+  "email": zod.string().email(),
+  "topic": zod.string(),
+  "relevanceThreshold": zod.union([zod.literal(50),zod.literal(70),zod.literal(90)])
+})
+
+
+/**
+ * @summary Update saved feed settings
+ */
+export const UpdateFeedSettingsBody = zod.object({
+  "email": zod.string().email(),
+  "relevanceThreshold": zod.union([zod.literal(50),zod.literal(70),zod.literal(90)])
+})
+
+export const UpdateFeedSettingsResponse = zod.object({
+  "email": zod.string().email(),
+  "topic": zod.string(),
+  "relevanceThreshold": zod.union([zod.literal(50),zod.literal(70),zod.literal(90)])
+})
 
 
 /**
@@ -56,4 +112,37 @@ export const SavePaperFeedbackResponse = zod.object({
   "paperId": zod.string(),
   "thumbsUpDown": zod.union([zod.literal(-1),zod.literal(1)]),
   "message": zod.string()
+})
+
+
+/**
+ * @summary Register an email and research topic
+ */
+export const registerUserBodyTopicMax = 200;
+
+
+
+export const RegisterUserBody = zod.object({
+  "email": zod.string().email(),
+  "topic": zod.string().min(1).max(registerUserBodyTopicMax)
+})
+
+export const RegisterUserResponse = zod.object({
+  "id": zod.number().int(),
+  "email": zod.string().email(),
+  "topic": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+/**
+ * @summary Find an existing subscription by email
+ */
+export const LoginUserBody = zod.object({
+  "email": zod.string().email()
+})
+
+export const LoginUserResponse = zod.object({
+  "id": zod.number().int(),
+  "email": zod.string().email(),
+  "topic": zod.string(),
+  "createdAt": zod.coerce.date()
 })
