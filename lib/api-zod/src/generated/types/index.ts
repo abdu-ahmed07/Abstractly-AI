@@ -7,9 +7,21 @@
  */
 
 export * from './apiError';
+export * from './emailLookup';
+export * from './feedSettings';
+export * from './feedSettingsRelevanceThreshold';
+export * from './getFeedSettingsParams';
 export * from './healthStatus';
+export * from './listScoredPapersParams';
+export * from './listScoredPapersView';
 export * from './paperFeedback';
 export * from './paperFeedbackInput';
 export * from './paperFeedbackInputThumbsUpDown';
 export * from './paperFeedbackThumbsUpDown';
+export * from './readLaterInput';
+export * from './readLaterResponse';
 export * from './scoredPaper';
+export * from './updateFeedSettingsInput';
+export * from './updateFeedSettingsInputRelevanceThreshold';
+export * from './user';
+export * from './userInput';
