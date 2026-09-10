@@ -21,10 +21,19 @@ import type {
 
 import type {
   ApiError,
+  EmailLookup,
+  FeedSettings,
+  GetFeedSettingsParams,
   HealthStatus,
+  ListScoredPapersParams,
   PaperFeedback,
   PaperFeedbackInput,
-  ScoredPaper
+  ReadLaterInput,
+  ReadLaterResponse,
+  ScoredPaper,
+  UpdateFeedSettingsInput,
+  User,
+  UserInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -132,20 +141,27 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
-export const getListScoredPapersUrl = () => {
+export const getListScoredPapersUrl = (params: ListScoredPapersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/abstractly/papers`
+  return stringifiedParams.length > 0 ? `/api/abstractly/papers?${stringifiedParams}` : `/api/abstractly/papers`
 }
 
 /**
  * @summary List scored papers
  */
-export const listScoredPapers = async ( options?: Parameters<typeof customFetch>[1]): Promise<ScoredPaper[]> => {
+export const listScoredPapers = async (params: ListScoredPapersParams, options?: Parameters<typeof customFetch>[1]): Promise<ScoredPaper[]> => {
 
-  return customFetch<ScoredPaper[]>(getListScoredPapersUrl(),
+  return customFetch<ScoredPaper[]>(getListScoredPapersUrl(params),
   {
     ...options,
     method: 'GET'
@@ -158,23 +174,23 @@ export const listScoredPapers = async ( options?: Parameters<typeof customFetch>
 
 
 
-export const getListScoredPapersQueryKey = () => {
+export const getListScoredPapersQueryKey = (params?: ListScoredPapersParams,) => {
     return [
-    `/api/abstractly/papers`
+    `/api/abstractly/papers`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListScoredPapersQueryOptions = <TData = Awaited<ReturnType<typeof listScoredPapers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listScoredPapers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListScoredPapersQueryOptions = <TData = Awaited<ReturnType<typeof listScoredPapers>>, TError = ErrorType<ApiError>>(params: ListScoredPapersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listScoredPapers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListScoredPapersQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListScoredPapersQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listScoredPapers>>> = ({ signal }) => listScoredPapers({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listScoredPapers>>> = ({ signal }) => listScoredPapers(params, { signal, ...requestOptions });
 
 
 
@@ -184,19 +200,19 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListScoredPapersQueryResult = NonNullable<Awaited<ReturnType<typeof listScoredPapers>>>
-export type ListScoredPapersQueryError = ErrorType<unknown>
+export type ListScoredPapersQueryError = ErrorType<ApiError>
 
 
 /**
  * @summary List scored papers
  */
 
-export function useListScoredPapers<TData = Awaited<ReturnType<typeof listScoredPapers>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listScoredPapers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export function useListScoredPapers<TData = Awaited<ReturnType<typeof listScoredPapers>>, TError = ErrorType<ApiError>>(
+ params: ListScoredPapersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listScoredPapers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListScoredPapersQueryOptions(options)
+  const queryOptions = getListScoredPapersQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -208,6 +224,232 @@ export function useListScoredPapers<TData = Awaited<ReturnType<typeof listScored
 
 
 
+
+export const getSetReadLaterUrl = () => {
+
+
+
+
+  return `/api/abstractly/read-later`
+}
+
+/**
+ * @summary Save or remove a paper from Read Later
+ */
+export const setReadLater = async (readLaterInput: ReadLaterInput, options?: Parameters<typeof customFetch>[1]): Promise<ReadLaterResponse> => {
+
+  return customFetch<ReadLaterResponse>(getSetReadLaterUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(readLaterInput)
+  }
+);}
+
+
+
+
+
+export const getSetReadLaterMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setReadLater>>, TError,{data: BodyType<ReadLaterInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setReadLater>>, TError,{data: BodyType<ReadLaterInput>}, TContext> => {
+
+const mutationKey = ['setReadLater'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setReadLater>>, {data: BodyType<ReadLaterInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setReadLater(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetReadLaterMutationResult = NonNullable<Awaited<ReturnType<typeof setReadLater>>>
+    export type SetReadLaterMutationBody = BodyType<ReadLaterInput>
+    export type SetReadLaterMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Save or remove a paper from Read Later
+ */
+export const useSetReadLater = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setReadLater>>, TError,{data: BodyType<ReadLaterInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setReadLater>>,
+        TError,
+        {data: BodyType<ReadLaterInput>},
+        TContext
+      > => {
+      return useMutation(getSetReadLaterMutationOptions(options));
+    }
+
+export const getGetFeedSettingsUrl = (params: GetFeedSettingsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/abstractly/settings?${stringifiedParams}` : `/api/abstractly/settings`
+}
+
+/**
+ * @summary Get feed settings
+ */
+export const getFeedSettings = async (params: GetFeedSettingsParams, options?: Parameters<typeof customFetch>[1]): Promise<FeedSettings> => {
+
+  return customFetch<FeedSettings>(getGetFeedSettingsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFeedSettingsQueryKey = (params?: GetFeedSettingsParams,) => {
+    return [
+    `/api/abstractly/settings`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetFeedSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getFeedSettings>>, TError = ErrorType<ApiError>>(params: GetFeedSettingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFeedSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeedSettingsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeedSettings>>> = ({ signal }) => getFeedSettings(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeedSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFeedSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getFeedSettings>>>
+export type GetFeedSettingsQueryError = ErrorType<ApiError>
+
+
+/**
+ * @summary Get feed settings
+ */
+
+export function useGetFeedSettings<TData = Awaited<ReturnType<typeof getFeedSettings>>, TError = ErrorType<ApiError>>(
+ params: GetFeedSettingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFeedSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFeedSettingsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateFeedSettingsUrl = () => {
+
+
+
+
+  return `/api/abstractly/settings`
+}
+
+/**
+ * @summary Update saved feed settings
+ */
+export const updateFeedSettings = async (updateFeedSettingsInput: UpdateFeedSettingsInput, options?: Parameters<typeof customFetch>[1]): Promise<FeedSettings> => {
+
+  return customFetch<FeedSettings>(getUpdateFeedSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateFeedSettingsInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateFeedSettingsMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFeedSettings>>, TError,{data: BodyType<UpdateFeedSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateFeedSettings>>, TError,{data: BodyType<UpdateFeedSettingsInput>}, TContext> => {
+
+const mutationKey = ['updateFeedSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFeedSettings>>, {data: BodyType<UpdateFeedSettingsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateFeedSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateFeedSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateFeedSettings>>>
+    export type UpdateFeedSettingsMutationBody = BodyType<UpdateFeedSettingsInput>
+    export type UpdateFeedSettingsMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Update saved feed settings
+ */
+export const useUpdateFeedSettings = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFeedSettings>>, TError,{data: BodyType<UpdateFeedSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateFeedSettings>>,
+        TError,
+        {data: BodyType<UpdateFeedSettingsInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateFeedSettingsMutationOptions(options));
+    }
 
 export const getSavePaperFeedbackUrl = () => {
 
@@ -278,4 +520,146 @@ export const useSavePaperFeedback = <TError = ErrorType<ApiError>,
         TContext
       > => {
       return useMutation(getSavePaperFeedbackMutationOptions(options));
+    }
+
+export const getRegisterUserUrl = () => {
+
+
+
+
+  return `/api/abstractly/users`
+}
+
+/**
+ * @summary Register an email and research topic
+ */
+export const registerUser = async (userInput: UserInput, options?: Parameters<typeof customFetch>[1]): Promise<User> => {
+
+  return customFetch<User>(getRegisterUserUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(userInput)
+  }
+);}
+
+
+
+
+
+export const getRegisterUserMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<UserInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<UserInput>}, TContext> => {
+
+const mutationKey = ['registerUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerUser>>, {data: BodyType<UserInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerUser(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterUserMutationResult = NonNullable<Awaited<ReturnType<typeof registerUser>>>
+    export type RegisterUserMutationBody = BodyType<UserInput>
+    export type RegisterUserMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Register an email and research topic
+ */
+export const useRegisterUser = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<UserInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerUser>>,
+        TError,
+        {data: BodyType<UserInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterUserMutationOptions(options));
+    }
+
+export const getLoginUserUrl = () => {
+
+
+
+
+  return `/api/abstractly/login`
+}
+
+/**
+ * @summary Find an existing subscription by email
+ */
+export const loginUser = async (emailLookup: EmailLookup, options?: Parameters<typeof customFetch>[1]): Promise<User> => {
+
+  return customFetch<User>(getLoginUserUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(emailLookup)
+  }
+);}
+
+
+
+
+
+export const getLoginUserMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginUser>>, TError,{data: BodyType<EmailLookup>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginUser>>, TError,{data: BodyType<EmailLookup>}, TContext> => {
+
+const mutationKey = ['loginUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginUser>>, {data: BodyType<EmailLookup>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  loginUser(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginUserMutationResult = NonNullable<Awaited<ReturnType<typeof loginUser>>>
+    export type LoginUserMutationBody = BodyType<EmailLookup>
+    export type LoginUserMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Find an existing subscription by email
+ */
+export const useLoginUser = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginUser>>, TError,{data: BodyType<EmailLookup>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof loginUser>>,
+        TError,
+        {data: BodyType<EmailLookup>},
+        TContext
+      > => {
+      return useMutation(getLoginUserMutationOptions(options));
     }
