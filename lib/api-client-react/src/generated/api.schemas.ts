@@ -30,6 +30,7 @@ export interface ScoredPaper {
      * @nullable
      */
   feedback: number | null;
+  readLater: boolean;
 }
 
 export type PaperFeedbackInputThumbsUpDown = typeof PaperFeedbackInputThumbsUpDown[keyof typeof PaperFeedbackInputThumbsUpDown];
@@ -60,6 +61,85 @@ export interface PaperFeedback {
   message: string;
 }
 
+export interface ReadLaterInput {
+  email: string;
+  /** @minLength 1 */
+  paperId: string;
+  saved: boolean;
+}
+
+export interface ReadLaterResponse {
+  paperId: string;
+  saved: boolean;
+  message: string;
+}
+
+export interface UserInput {
+  email: string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  topic: string;
+}
+
+export interface EmailLookup {
+  email: string;
+}
+
+export type FeedSettingsRelevanceThreshold = typeof FeedSettingsRelevanceThreshold[keyof typeof FeedSettingsRelevanceThreshold];
+
+
+export const FeedSettingsRelevanceThreshold = {
+  NUMBER_50: 50,
+  NUMBER_70: 70,
+  NUMBER_90: 90,
+} as const;
+
+export interface FeedSettings {
+  email: string;
+  topic: string;
+  relevanceThreshold: FeedSettingsRelevanceThreshold;
+}
+
+export type UpdateFeedSettingsInputRelevanceThreshold = typeof UpdateFeedSettingsInputRelevanceThreshold[keyof typeof UpdateFeedSettingsInputRelevanceThreshold];
+
+
+export const UpdateFeedSettingsInputRelevanceThreshold = {
+  NUMBER_50: 50,
+  NUMBER_70: 70,
+  NUMBER_90: 90,
+} as const;
+
+export interface UpdateFeedSettingsInput {
+  email: string;
+  relevanceThreshold: UpdateFeedSettingsInputRelevanceThreshold;
+}
+
+export interface User {
+  id: number;
+  email: string;
+  topic: string;
+  createdAt: string;
+}
+
 export interface ApiError {
   error: string;
 }
+
+export type ListScoredPapersParams = {
+email: string;
+view?: ListScoredPapersView;
+};
+
+export type ListScoredPapersView = typeof ListScoredPapersView[keyof typeof ListScoredPapersView];
+
+
+export const ListScoredPapersView = {
+  all: 'all',
+  read_later: 'read_later',
+} as const;
+
+export type GetFeedSettingsParams = {
+email: string;
+};
