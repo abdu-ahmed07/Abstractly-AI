@@ -31,6 +31,20 @@ paths:
       operationId: listScoredPapers
       tags: [abstractly]
       summary: List scored papers
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+        - in: query
+          name: view
+          required: false
+          schema:
+            type: string
+            enum: [all, read_later]
+            default: all
       responses:
         "200":
           description: Scored papers ordered by relevance
@@ -40,6 +54,108 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ScoredPaper"
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: No subscription found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /abstractly/read-later:
+    post:
+      operationId: setReadLater
+      tags: [abstractly]
+      summary: Save or remove a paper from Read Later
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadLaterInput"
+      responses:
+        "200":
+          description: Read Later state saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadLaterResponse"
+        "400":
+          description: Invalid Read Later request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: User or paper not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /abstractly/settings:
+    get:
+      operationId: getFeedSettings
+      tags: [abstractly]
+      summary: Get feed settings
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: Saved feed settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedSettings"
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: No subscription found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updateFeedSettings
+      tags: [abstractly]
+      summary: Update saved feed settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFeedSettingsInput"
+      responses:
+        "200":
+          description: Updated feed settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedSettings"
+        "400":
+          description: Invalid settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: No subscription found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
   /abstractly/feedback:
     post:
       operationId: savePaperFeedback
@@ -66,6 +182,60 @@ paths:
                 $ref: "#/components/schemas/ApiError"
         "404":
           description: Paper not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /abstractly/users:
+    post:
+      operationId: registerUser
+      tags: [abstractly]
+      summary: Register an email and research topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid signup
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /abstractly/login:
+    post:
+      operationId: loginUser
+      tags: [abstractly]
+      summary: Find an existing subscription by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLookup"
+      responses:
+        "200":
+          description: Existing subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: No subscription found
           content:
             application/json:
               schema:
@@ -102,6 +272,8 @@ components:
           type: ["integer", "null"]
           minimum: -1
           maximum: 1
+        readLater:
+          type: boolean
       required:
         - paperId
         - title
@@ -111,6 +283,7 @@ components:
         - relevanceScore
         - rationale
         - feedback
+        - readLater
     PaperFeedbackInput:
       type: object
       properties:
@@ -137,6 +310,100 @@ components:
         - paperId
         - thumbsUpDown
         - message
+    ReadLaterInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        paperId:
+          type: string
+          minLength: 1
+        saved:
+          type: boolean
+      required:
+        - email
+        - paperId
+        - saved
+    ReadLaterResponse:
+      type: object
+      properties:
+        paperId:
+          type: string
+        saved:
+          type: boolean
+        message:
+          type: string
+      required:
+        - paperId
+        - saved
+        - message
+    UserInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        topic:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+        - email
+        - topic
+    EmailLookup:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+        - email
+    FeedSettings:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        topic:
+          type: string
+        relevanceThreshold:
+          type: integer
+          enum: [50, 70, 90]
+      required:
+        - email
+        - topic
+        - relevanceThreshold
+    UpdateFeedSettingsInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        relevanceThreshold:
+          type: integer
+          enum: [50, 70, 90]
+      required:
+        - email
+        - relevanceThreshold
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        topic:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - topic
+        - createdAt
     ApiError:
       type: object
       properties:
