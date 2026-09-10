@@ -36,4 +36,42 @@ abstractlyDatabase.exec(`
     paper_id TEXT PRIMARY KEY,
     thumbs_up_down INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS read_later (
+    user_id INTEGER NOT NULL,
+    paper_id TEXT NOT NULL,
+    saved_at TEXT NOT NULL,
+    PRIMARY KEY (user_id, paper_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    relevance_threshold INTEGER NOT NULL DEFAULT 50
+      CHECK (relevance_threshold IN (50, 70, 90)),
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS email_deliveries (
+    user_id INTEGER NOT NULL,
+    paper_id TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'delivered')),
+    attempted_at TEXT NOT NULL,
+    delivered_at TEXT,
+    resend_message_id TEXT,
+    last_error TEXT,
+    PRIMARY KEY (user_id, paper_id, topic)
+  );
 `);
+
+const userColumns = abstractlyDatabase
+  .prepare("PRAGMA table_info(users)")
+  .all() as Array<{ name: string }>;
+
+if (!userColumns.some((column) => column.name === "relevance_threshold")) {
+  abstractlyDatabase.exec(
+    "ALTER TABLE users ADD COLUMN relevance_threshold INTEGER NOT NULL DEFAULT 50",
+  );
+}
