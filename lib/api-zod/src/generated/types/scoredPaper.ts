@@ -27,4 +27,5 @@ export interface ScoredPaper {
      * @nullable
      */
   feedback: number | null;
+  readLater: boolean;
 }
