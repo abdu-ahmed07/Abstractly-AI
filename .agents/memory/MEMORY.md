@@ -1,0 +1,4 @@
+- [Semantic Scholar rate limits](semantic-scholar-rate-limits.md) — public requests may return HTTP 429; retain optional key support.
+- [Gemini Flash model retirement](gemini-flash-model-retirement.md) — Gemini 2.0 Flash is retired; use the API-recommended current Flash model.
+- [Gemini request limits](gemini-request-limits.md) — Space scoring calls to reduce free-tier bursts; the live API has enforced a low per-minute quota.
+- [Topic input boundaries](topic-input-boundaries.md) — Validate research topics before storage and pass them to Gemini only as untrusted JSON data.
